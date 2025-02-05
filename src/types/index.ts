@@ -1,8 +1,5 @@
-// БАЗОВЫЕ КЛАССЫ
-
 // Интерфейс API-клиента
 export interface ILarekApi {
-  getProduct(id: string): Promise<IProduct>;
   getProducts(): Promise<{items: IProduct[]}>;
   makeOrder(data: IOrder): Promise<object>;
 }
@@ -17,17 +14,14 @@ export interface IEvents {
   trigger<T extends object>(event: string, context?: Partial<T>): (data: T) => void;
 }
 
-
-// МОДЕЛИ ДАННЫХ
-
 // Данные товара
 export interface IProduct {
-	id: number;
+  id: number;
   title: string;
-  imageUrl: string;
-	description: string;
-	category: string;
-	price: number;
+  image: string;
+  description: string;
+  category: string;
+  price: number;
 }
 
 // Данные состояния приложения
@@ -38,42 +32,22 @@ export interface IAppState {
   cart: ICart;
 }
 
-
-// КОМПОНЕНТЫ ОТОБРАЖЕНИЯ
-
-// Интерфейс страницы
-export interface IPage {
-  counter: number;
-  catalog: HTMLElement[];
-  locked: boolean;
-}
-
-// Интерфейс модального окна
-interface IModal {
-  content: HTMLElement;
-}
-
 // Интерфейс заказа
 export interface IOrder {
-  items: string[];
-	total: number;
   payment: 'cash' | 'card';
-	address: string;
+  address: string;
   email: string;
-	phone: string;
+  phone: string;
 }
 
 // Интерфейс корзины
 export interface ICart {
-  items: string[];
-	total: number;
+  items: ICartItem[];
+  calculateTotal(): number;
 }
 
-// Тип формы заказа
-export type TOrderForm = Pick<IOrder, 'payment' | 'address' | 'email' | 'phone'>;
-
-// Интерфейс состояния формы
-interface IFormState {
-	valid: boolean;
-	errors: string[];
+// Интерфейс элемента корзины
+export interface ICartItem {
+  productId: string;
+  quantity: number;
 }
