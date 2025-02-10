@@ -28,19 +28,26 @@ export class Cart extends ViewComponent<ICart> {
 		this.setDisabled(this._button, !state);
 	}
 
-    set items(items: HTMLElement[]) {
-		if (items.length) {
-			this._list.replaceChildren(...items);
-			this.toggleButton(true);
-		} else {
-			this._list.replaceChildren(
-				createElement<HTMLParagraphElement>('p', {
-					textContent: 'Корзина пуста',
-				})
-			);
-			this.toggleButton(false);
-		}
-	}
+	set items(items: HTMLElement[]) {
+        this._list.innerHTML = '';
+		
+        if (items.length) {
+            items.forEach((item, index) => {
+                const basketItem = item as HTMLElement;
+                const indexSpan = basketItem.querySelector('.basket__item-index') as HTMLElement;
+                if (indexSpan) {
+                    indexSpan.textContent = `${index + 1}`;
+                }
+                this._list.appendChild(basketItem);
+            });
+            this.toggleButton(true);
+        } else {
+            this._list.replaceChildren(createElement<HTMLParagraphElement>('p', {
+                textContent: 'Корзина пуста',
+            }));
+            this.toggleButton(false);
+        }
+    }
 
 	set total(total: number) {
 		this.setText(this._total, `${total} синапсов`);

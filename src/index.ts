@@ -73,18 +73,23 @@ events.on('card:select', (item: IProduct) => {
 // Отображение превью
 events.on('preview:change', (item: IProduct) => {
 	const card = new Card(cloneTemplate(cardPreviewTemplate), {
-		onClick: () => {
-			if (appState.isInCart(item)) {
-				appState.removeFromCart(item);
-				card.button = 'В корзину';
-			} else {
-				appState.addToCart(item);
-				card.button = 'Удалить из корзины';
-			}
-		},
+	  onClick: async () => {
+		try {
+		  if (appState.isInCart(item)) {
+			await appState.removeFromCart(item);
+			card.button = 'В корзину'; 
+		  } else {
+			await appState.addToCart(item);
+			card.button = 'Удалить из корзины'; 
+		  }
+		  modal.render({ content: card.render(item) }); 
+		} catch (error) {
+		  console.error('Ошибка при обновлении корзины', error);
+		}
+	  },
 	});
-
-    card.button = appState.isInCart(item) ? 'Удалить из корзины' : 'В корзину';
+  
+	card.button = appState.isInCart(item) ? 'Удалить из корзины' : 'В корзину';
 	modal.render({ content: card.render(item) });
 });
 
@@ -108,7 +113,8 @@ events.on('cart:open', () => {
 // Изменение корзины: добавление или удаление товара
 events.on('cart:change', () => {
     page.counter = appState.cart.items.length;
-	cart.items = appState.cart.items.map((id) => {
+
+	cart.items = appState.cart.items.map((id, index) => {
 		const item = appState.catalog.find((item) => item.id === id);
 		const card = new Card(cloneTemplate(cardCartTemplate), {
 			onClick: () => appState.removeFromCart(item),
@@ -121,27 +127,37 @@ events.on('cart:change', () => {
 
 // Открытие первой формы для оформления заказа
 events.on('order:open', () => {
+    const address = appState.getOrderField('address') || '';
+    const payment = appState.getOrderField('payment') || 'card';
+
+    // Проверяем валидность формы
+    const isValid = appState.validateDeliveryForm();
 
     modal.render({
-      content: order.render({
-        address: '',
-        payment: 'card',
-        valid: false,
-        errors: []
-      })
+        content: order.render({
+            address: address,
+            payment: payment === 'card' || payment === 'cash' ? payment : 'card',
+            valid: isValid,
+            errors: []
+        })
     });
 });
 
 // Отправка первой формы оформления заказа и открытие второй формы
 events.on('order:submit', () => {
-	modal.render({
-		content: contacts.render({
-			email: '',
-			phone: '',
-			valid: false,
-			errors: [],
-		}),
-	});
+    const email = appState.getOrderField('email') || '';
+    const phone = appState.getOrderField('phone') || '';
+  
+    const isValid = appState.validateContactsForm();
+
+    modal.render({
+        content: contacts.render({
+            email: email,
+            phone: phone,
+            valid: isValid,
+            errors: []
+        }),
+    });
 });
 
 // Отправка второй формы оформления заказа и открытие окна подтверждения заказа
@@ -151,7 +167,7 @@ events.on('contacts:submit', () => {
             modal.render({
                 content: success.render(),
             }); 
-			success.totalPrice = appState.cart.total;
+			success.totalPrice = data.total;
 			appState.clearCart();
 			appState.clearOrder();
 		})
@@ -162,17 +178,18 @@ events.on('contacts:submit', () => {
 
 // Изменение полей заказа в форме
 events.on('payment:change', (item: HTMLButtonElement) => {
-    appState.order.payment = item.name as "cash" | "card";
+    appState.setOrderField('payment', item.name as "card" | "cash" );
+	appState.validateDeliveryForm();
 });
 
 events.on(/^order\..*:change/, (data: { field: keyof IOrder, value: string }) => {
     appState.setOrderField(data.field, data.value);
-    appState.validateForm();
+    appState.validateDeliveryForm();
 });
   
 events.on(/^contacts\..*:change/, (data: { field: keyof IOrder, value: string }) => {
     appState.setOrderField(data.field, data.value);
-    appState.validateForm();
+    appState.validateContactsForm();
 });
 
 // Отслеживание валидности формы

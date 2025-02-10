@@ -33,6 +33,6 @@ export interface IOrder {
 // Интерфейс корзины
 export interface ICart {
     items: string[];
-	total: number;
+    total: number;
     selected?: string[];
 }

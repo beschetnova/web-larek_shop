@@ -14,23 +14,20 @@ export class Card extends ViewComponent<IProduct> {
     protected _category?: HTMLElement;
     protected _price: HTMLElement;
     protected _button?: HTMLButtonElement;
+    protected _categories? = categories;
 
     constructor(container: HTMLElement, actions?: ICardActions) {
         super(container);
 
         this._title = ensureElement<HTMLElement>('.card__title', container);
-        this._image = container.querySelector('.card__image');
-        this._description = container.querySelector('.card__description');
-        this._category = container.querySelector('.card__category');
-        this._price = ensureElement<HTMLImageElement>('.card__price', container);
+        this._image = container.querySelector('.card__image') as HTMLImageElement;
+        this._description = container.querySelector('.card__description') as HTMLElement;
+        this._category = container.querySelector('.card__category') as HTMLElement;
+        this._price = ensureElement<HTMLElement>('.card__price', container);
         this._button = container.querySelector('.card__button');
 
         if (actions?.onClick) {
-            if (this._button) {
-                this._button.addEventListener('click', actions.onClick);
-            } else {
-                container.addEventListener('click', actions.onClick);
-            }
+            (this._button || container).addEventListener('click', actions.onClick);
         }
     }
 
@@ -45,25 +42,20 @@ export class Card extends ViewComponent<IProduct> {
 
     set price(value: string) {
         this.setText(this._price, value ? `${value} синапсов` : 'Бесценно');
-        if (this._button) {
-            this._button.disabled = !value;
-        }
+        this.setDisabled(this._button!, !value);
     }
 
     set category(value: string) {
-        this.setText(this._category, value);
+        this.setText(this._category!, value);
         if (this._category) {
-            this._category.classList.add(
-                `card__category_${
-                    categories.get(value) ? categories.get(value) : 'other'
-                }`
-            );
+            const categoryClass = this._categories.get(value) || 'other';
+            this.toggleClass(this._category!, `card__category_${categoryClass}`, true);
         }
     }
-
+    
     set button(text: string) {
         if (this._button) {
-            this._button.textContent = text;
+            this.setText(this._button, text);
         }
     }
 }
